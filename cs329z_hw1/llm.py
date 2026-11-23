@@ -69,6 +69,7 @@ DEFAULT_REASONING_EFFORT = "low"
 # https://openrouter.ai/models on 2026-10-05 (the same as OpenAI's list
 # prices).
 PRICES = {
+    "deepseek-v4.1-flash-1017": (0.27, 0.27, 1.10),
     "gpt-4.1": (2.00, 0.50, 8.00),
     "gpt-4.1-mini": (0.40, 0.10, 1.60),
     "gpt-4.1-nano": (0.10, 0.025, 0.40),
@@ -248,6 +249,8 @@ class LM:
     ) -> None:
         _load_env()
         self.model = resolve_model(model)
+        if "deepseek" in self.model.lower() and max_tokens <= 4096:
+            max_tokens = 16384
         _price(self.model)  # fail now, not after a paid call, if the price is unknown
         self.temperature = temperature
         self.max_tokens = max_tokens
@@ -376,7 +379,7 @@ class LM:
         if self.model not in _NO_TEMPERATURE:
             kwargs["temperature"] = self.temperature
         effort = os.environ.get("CS329Z_REASONING_EFFORT", DEFAULT_REASONING_EFFORT)
-        if effort and self.model not in _NO_EFFORT:
+        if effort and "deepseek" not in self.model.lower() and self.model not in _NO_EFFORT:
             kwargs["extra_body"]["reasoning"] = {"effort": effort}
         try:
             response = self._client.chat.completions.create(**kwargs)

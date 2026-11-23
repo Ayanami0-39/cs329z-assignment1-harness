@@ -62,6 +62,14 @@ class RetryingLM:
         self.retry = LM(role, max_tokens=2 * max_tokens, salt=salt, tag=tag)
         self.model = self.lm.model
 
+    @property
+    def calls(self) -> int:
+        return self.lm.calls + self.retry.calls
+
+    @property
+    def cost_usd(self) -> float:
+        return self.lm.cost_usd + self.retry.cost_usd
+
     def __call__(self, messages) -> str:
         try:
             return self.lm(messages)
